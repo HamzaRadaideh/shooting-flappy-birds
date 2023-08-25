@@ -2,71 +2,65 @@ import pygame
 import random
 import math
 
-# Initialize pygame
 pygame.init()
 
 audio_muted = False
 show_shortcuts_menu = False
 
+bird_amplitude = 50
+bird_frequency = 0.1
 
-# At the beginning of your code
-bird_amplitude = 50  # Adjust as needed
-bird_frequency = 0.1  # Adjust as needed
-
-# Game constants
-WIDTH = 800
-HEIGHT = 600
-FPS = 60
+width = 1000
+height = 600
+fps = 60
 
 # Colors
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
+White = (255, 255, 255)
+Black = (0, 0, 0)
+Red = (255, 0, 0)
+Blue = (0, 0, 255)
+Green = (0, 255, 0)
+Yellow = (255, 255, 0)
 
 player_health = 100
 max_health = 100
-health_regen_rate = 0.1  # Adjust as needed
+health_regen_rate = 0.1
 damage_amount = 25
 
-
-# Create the game window
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((width,height))
 pygame.display.set_caption("Shooting Flappy Birds")
 
-# Load game assets (character, bird, bullet, background, etc.)
-
-# Game variables
 player_x = 50
-player_y = HEIGHT // 2
+player_y = height //2
 player_speed = 5
 
 score = 0
 
-birds = []
-bird_speed = 3
-bird_spawn_timer = 0
+yellow_bird = []
+yellow_bird_speed = 2
+yellow_spawn_timer = 0
+
+blue_bird = []
+blue_bird_speed = 2
+blue_spawn_timer = 0
+
+red_bird = []
+red_bird_speed = 2
+red_spawn_timer = 0
 
 bullets = []
 bullet_speed = 10
 
-lives = 3
-
-# Game loop
 running = True
 clock = pygame.time.Clock()
-paused = False  # Add this variable for pausing the game
-
+paused = False
 background = pygame.image.load("background.jpeg").convert()
-background = pygame.transform.scale(background, (WIDTH, HEIGHT))
-
+background = pygame.transform.scale(background, (width,height))
 start_time = pygame.time.get_ticks()
-
 
 
 while running:
     screen.blit(background, (0, 0))
-
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -74,7 +68,6 @@ while running:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                # Shoot a bullet
                 bullets.append([player_x + 50, player_y + 25])
             elif event.key == pygame.K_ESCAPE:
                 paused = not paused
@@ -83,18 +76,34 @@ while running:
             elif event.key == pygame.K_h:
                 show_shortcuts_menu = not show_shortcuts_menu
 
-
-
     if paused:
         # Draw a pause message or screen
-        pause_text = font.render("PAUSED", True, RED)
-        pause_rect = pause_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        pause_text = font.render("PAUSED", True, Red)
+        pause_rect = pause_text.get_rect(center=(width // 2, height // 2))
         screen.blit(pause_text, pause_rect)
 
+        if audio_muted:
+            audio_text = font.render("Audio: Muted (Press 'A' to Unmute", True, Black)
+        else:
+            audio_text = font.render("Audio: On (Press 'A' to Mute)", True, Black)
 
+        if show_shortcuts_menu:
+            shortcuts_text = font.render("Keyboard Shortcuts:", True, Black)
+            shortcut_info = [
+                "A - Toggle Audio",
+                "H - Show/Hide Shortcuts",
+                "Esc - Pause/Resume",
+                "Space - Shoot",
+                "Up/Down - Move",
+            ]
+            y_position = 40
+            for shortcut in shortcut_info:
+                shortcut_render = font.render(shortcut, True, Black)
+                screen.blit(shortcut_render, (10, y_position))
+                y_position += 30
 
         # Display game progress (score)
-        progress_text = font.render(f"Score: {score} | Time: {run_time:.2f} seconds", True, BLACK)
+        progress_text = font.render(f"Score: {score} | Time: {run_time:.2f} seconds", True, Black)
         screen.blit(progress_text, (10, 10))
 
     else:
@@ -108,41 +117,95 @@ while running:
             player_y += player_speed
 
         # Update player
-        pygame.draw.rect(screen, BLACK, (player_x, player_y, 50, 50))
+        pygame.draw.rect(screen, Black, (player_x, player_y, 50, 50))
 
-        # Update birds
-        for bird in birds:
-            bird[0] -= bird_speed
+        # spawn yellow birds
+        yellow_spawn_timer += 2
+        if yellow_spawn_timer >= 100:
+            yellow_bird.append([width, random.randint(50, height - 50)])
+            yellow_spawn_timer = 0
 
-            # Update y-position in a wave-like pattern
-            bird[1] = HEIGHT // 2 + bird_amplitude * math.sin(bird_frequency * bird[0])
+        # Update yellow birds
+        for bird in yellow_bird:
+            bird[0] -= yellow_bird_speed
+            bird[1] = height // 2 + bird_amplitude * math.sin(bird_frequency * bird[0])
+            pygame.draw.circle(screen, Yellow, (bird[0], bird[1]), 20)
 
-            pygame.draw.circle(screen, RED, (bird[0], bird[1]), 20)
+            # Check for collision with birds
+            for bird in yellow_bird:
+                bird_rect = pygame.Rect(bird[0], bird[1], 40, 40)
+                player_rect = pygame.Rect(player_x, player_y, 50, 50)
+                if player_rect.colliderect(bird_rect):
+                    player_health -= damage_amount
+                    yellow_bird.remove(bird)
 
             # Check for collision with bullets
             for bullet in bullets:
                 if pygame.Rect(bullet[0], bullet[1], 10, 10).colliderect(pygame.Rect(bird[0], bird[1], 40, 40)):
-                    birds.remove(bird)
+                    yellow_bird.remove(bird)
+                    bullets.remove(bullet)
+                    score += 1
+
+        # spawn blue birds
+        blue_spawn_timer += 1
+        if blue_spawn_timer >= 100:
+            blue_bird.append([width, random.randint(50, height - 50)])
+            blue_spawn_timer = 0
+        # Update blue birds
+        for bird in blue_bird:
+            bird[0] -= blue_bird_speed
+            bird[1] = height // 2 + bird_amplitude * math.sin(bird_frequency * bird[0])
+            pygame.draw.circle(screen, Blue, (bird[0], bird[1]), 20)
+
+            # Check for collision with birds
+            for bird in blue_bird:
+                bird_rect = pygame.Rect(bird[0], bird[1], 40, 40)
+                player_rect = pygame.Rect(player_x, player_y, 50, 50)
+                if player_rect.colliderect(bird_rect):
+                    player_health -= damage_amount
+                    blue_bird.remove(bird)
+
+            # Check for collision with bullets
+            for bullet in bullets:
+                if pygame.Rect(bullet[0], bullet[1], 10, 10).colliderect(pygame.Rect(bird[0], bird[1], 40, 40)):
+                    blue_bird.remove(bird)
+                    bullets.remove(bullet)
+                    score += 1
+
+        # spawn red birds
+        red_spawn_timer += 0.5
+        if red_spawn_timer >= 100:
+            red_bird.append([width, random.randint(50, height - 50)])
+            red_spawn_timer = 0
+
+        # Update red birds
+        for bird in red_bird:
+            bird[0] -= red_bird_speed
+            bird[1] = height // 2 + bird_amplitude * math.sin(bird_frequency * bird[0])
+            pygame.draw.circle(screen, Red, (bird[0], bird[1]), 20)
+
+            # Check for collision with birds
+            for bird in red_bird:
+                bird_rect = pygame.Rect(bird[0], bird[1], 40, 40)
+                player_rect = pygame.Rect(player_x, player_y, 50, 50)
+                if player_rect.colliderect(bird_rect):
+                    player_health -= damage_amount
+                    red_bird.remove(bird)
+
+            # Check for collision with bullets
+            for bullet in bullets:
+                if pygame.Rect(bullet[0], bullet[1], 10, 10).colliderect(pygame.Rect(bird[0], bird[1], 40, 40)):
+                    red_bird.remove(bird)
                     bullets.remove(bullet)
                     score += 1
 
         # Update bullets
         for bullet in bullets:
             bullet[0] += bullet_speed
-            pygame.draw.rect(screen, BLACK, (bullet[0], bullet[1], 10, 10))
+            pygame.draw.rect(screen, Black, (bullet[0], bullet[1], 10, 10))
 
-            if bullet[0] > WIDTH:
+            if bullet[0] > width:
                 bullets.remove(bullet)
-
-        # Inside the game loop
-
-        # Check for collision with birds
-        for bird in birds:
-            bird_rect = pygame.Rect(bird[0], bird[1], 40, 40)
-            player_rect = pygame.Rect(player_x, player_y, 50, 50)
-            if player_rect.colliderect(bird_rect):
-                player_health -= damage_amount
-                birds.remove(bird)
 
         # Health regeneration over time
         if player_health < max_health:
@@ -154,79 +217,42 @@ while running:
         if player_health <= 0:
             running = False  # End the game
 
-        # Bird spawning logic
-        bird_spawn_timer += 1
-        if bird_spawn_timer >= 100:
-            birds.append([WIDTH, random.randint(50, HEIGHT - 50)])
-            bird_spawn_timer = 0
-
-        # Inside the game loop
-
         # Draw health bar background
-        pygame.draw.rect(screen, BLACK, (10, 10, max_health + 4, 24))
-        pygame.draw.rect(screen, RED, (12, 12, max_health, 20))  # Max health
+        pygame.draw.rect(screen, Black, (10, 10, max_health + 4, 24))
+        pygame.draw.rect(screen, Red, (12, 12, max_health, 20))  # Max health
 
         # Draw current health
-        pygame.draw.rect(screen, GREEN, (12, 12, player_health, 20))
+        pygame.draw.rect(screen, Green, (12, 12, player_health, 20))
 
         # Inside the game loop, after updating the display
 
         font = pygame.font.Font(None, 36)
-        score_text = font.render(f"Score: {score}", True, BLACK)
-        screen.blit(score_text, (10, HEIGHT - 40))
+        score_text = font.render(f"Score: {score}", True, Black)
+        screen.blit(score_text, (10, height - 40))
 
     # Update display
     pygame.display.flip()
-    clock.tick(FPS)
-
-
-if audio_muted:
-    audio_text = font.render("Audio: Muted (Press 'A' to Unmute)", True, BLACK)
-else:
-    audio_text = font.render("Audio: On (Press 'A' to Mute)", True, BLACK)
-screen.blit(audio_text, (WIDTH - audio_text.get_width() - 10, 10))
-
-if show_shortcuts_menu:
-    shortcuts_text = font.render("Keyboard Shortcuts:", True, BLACK)
-    shortcut_info = [
-        "A - Toggle Audio",
-        "H - Show/Hide Shortcuts",
-        "Esc - Pause/Resume",
-        "Space - Shoot",
-        "Up/Down - Move",
-    ]
-    y_position = 40
-    for shortcut in shortcut_info:
-        shortcut_render = font.render(shortcut, True, BLACK)
-        screen.blit(shortcut_render, (10, y_position))
-        y_position += 30
-# After the game loop
-
-# Display game over message
-font = pygame.font.Font(None, 36)
-game_over_text = font.render("Game Over", True, RED)
-text_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-screen.blit(game_over_text, text_rect)
+    clock.tick(fps)
 
 # Calculate total run time
 end_time = pygame.time.get_ticks()
 run_time = (end_time - start_time) / 1000  # Convert to seconds
 
+# Display game over message
+font = pygame.font.Font(None, 36)
+game_over_text = font.render("Game Over", True, Red)
+text_rect = game_over_text.get_rect(center=(width // 2, height // 2))
+screen.blit(game_over_text, text_rect)
+
 # Display score and run time
-score_text = font.render(f"Score: {score}", True, BLACK)
-run_time_text = font.render(f"Run Time: {run_time:.2f} seconds", True, BLACK)
-screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 2 + 40))
-screen.blit(run_time_text, (WIDTH // 2 - run_time_text.get_width() // 2, HEIGHT // 2 + 80))
+score_text = font.render(f"Score: {score}", True, Black)
+run_time_text = font.render(f"Run Time: {run_time:.2f} seconds", True, Black)
+screen.blit(score_text, (width // 2 - score_text.get_width() // 2, height // 2 + 40))
+screen.blit(run_time_text, (width // 2 - run_time_text.get_width() // 2, height // 2 + 80))
 
 pygame.display.flip()
 
 # Wait for a few seconds before quitting
-pygame.time.wait(3000)  # 3000 milliseconds (3 seconds)
+pygame.time.wait(5000)
 
 pygame.quit()
-
-
-
-
-
-
