@@ -25,6 +25,7 @@ class Bird:
 
 class Player:
     def __init__(self, x, y):
+        self.height = 600
         self.x = x
         self.y = y
         self.speed = 5
@@ -37,6 +38,14 @@ class Player:
             self.y -= self.speed
         if keys[pygame.K_DOWN]:
             self.y += self.speed
+
+        # Ensure the player doesn't go above the top boundary
+        if self.y < 0:
+            self.y = 0
+
+        # Ensure the player doesn't go below the bottom boundary
+        if self.y > self.height - self.rect.height:
+            self.y = self.height - self.rect.height
 
     def update(self):
         self.rect.topleft = (self.x, self.y)
@@ -94,6 +103,16 @@ class Game:
         self.blue_spawn_timer = 0      # Initialize the blue bird spawn timer
         self.red_spawn_timer = 0       # Initialize the red bird spawn timer
 
+        self.restart_button = None  # Initialize the restart_button variable
+
+    def reset_game(self):
+        self.player = Player(50, self.height // 2)
+        self.bullets = []
+        self.enemies = []
+        self.score = 0
+        self.player.health = self.player.max_health
+        self.running = True
+
     def spawn_enemy(self, bird_class, bird_list, spawn_timer, spawn_frequency, image_path, speed):
         spawn_timer += spawn_frequency
         if spawn_timer >= 100:
@@ -107,11 +126,12 @@ class Game:
                 if bullet.rect.colliderect(enemy.rect):
                     bullet_list.remove(bullet)
                     enemy_list.remove(enemy)
-                    self.score += 10  # Increase score when an enemy is hit
+                    self.score += 1  # Increase score when an enemy is hit
                     return True
         return False
 
-    def check_collision(self, object1, object2_list):
+    @staticmethod
+    def check_collision(object1, object2_list):
         for obj2 in object2_list:
             if object1.rect.colliderect(obj2.rect):
                 object1.health -= 10
@@ -167,11 +187,36 @@ class Game:
                         self.bullets.remove(bullet)
 
                 # Handle collisions
-                for enemy in self.enemies:
+                for _ in self.enemies:
                     if self.check_collision(self.player, self.enemies):
                         pass
                     if self.check_bullet_collisions(self.bullets, self.enemies):
                         pass
+
+                if self.player.health <= 0:
+                    self.running = False
+
+                # Calculate elapsed time in seconds
+                elapsed_time = pygame.time.get_ticks() // 1000
+
+                # Render the elapsed time text
+                time_font = pygame.font.Font(None, 24)
+                time_text = time_font.render(f"Time: {elapsed_time} seconds", True, self.White)
+
+                # Display the elapsed time text
+                time_text_rect = time_text.get_rect(midleft=(10, 50))
+                self.screen.blit(time_text, time_text_rect)
+
+                score_font = pygame.font.Font(None, 36)
+                score_text = score_font.render(f"Score: {self.score}", True, self.White)
+                score_text_rect = score_text.get_rect(midleft=(220, 50))
+                self.screen.blit(score_text, score_text_rect)
+
+                health_percentage = int((self.player.health / self.player.max_health) * 100)
+                percentage_font = pygame.font.Font(None, 24)
+                percentage_text = percentage_font.render(f"{health_percentage}%", True, self.White)
+                percentage_text_rect = percentage_text.get_rect(midleft=(220, 20))
+                self.screen.blit(percentage_text, percentage_text_rect)
 
                 health_bar_width = (self.player.health / self.player.max_health) * 200
                 pygame.draw.rect(self.screen, self.Red, (10, 10, 200, 20))  # Background
@@ -191,17 +236,60 @@ class Game:
 
         # Display game over message and score
         if not self.running:
+            self.screen.blit(self.background, (0, 0))  # Clear the screen
+
             game_over_font = pygame.font.Font(None, 48)
             game_over_text = game_over_font.render("Game Over", True, self.Red)
+            game_over_rect = game_over_text.get_rect(center=(self.width // 2, self.height // 2))
+
+            # Display score
             score_font = pygame.font.Font(None, 36)
             score_text = score_font.render(f"Score: {self.score}", True, self.White)
-
-            game_over_rect = game_over_text.get_rect(center=(self.width // 2, self.height // 2 - 50))
             score_rect = score_text.get_rect(center=(self.width // 2, self.height // 2 + 50))
+
+            # Display runtime
+            runtime = pygame.time.get_ticks() // 1000  # Get runtime in seconds
+            runtime_font = pygame.font.Font(None, 24)
+            runtime_text = runtime_font.render(f"Runtime: {runtime} seconds", True, self.White)
+            runtime_text_rect = runtime_text.get_rect(center=(self.width // 2, self.height // 2 + 100))
 
             self.screen.blit(game_over_text, game_over_rect)
             self.screen.blit(score_text, score_rect)
-        pass
+            self.screen.blit(runtime_text, runtime_text_rect)
+
+            self.restart_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 150, 100, 50)
+            pygame.draw.rect(self.screen, self.Green, self.restart_button)
+
+            # Restart button
+            restart_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 150, 100, 50)
+            pygame.draw.rect(self.screen, self.Green, restart_button)
+            restart_font = pygame.font.Font(None, 24)
+            restart_text = restart_font.render("Restart", True, self.Black)
+            restart_text_rect = restart_text.get_rect(center=restart_button.center)
+            self.screen.blit(restart_text, restart_text_rect)
+
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            if restart_button.collidepoint(mouse_x, mouse_y):
+                pygame.draw.rect(self.screen, self.Yellow, restart_button)
+                if pygame.mouse.get_pressed()[0]:
+                    self.reset_game()
+            pass
+
+        pygame.display.flip()  # Update the display
+        waiting_for_restart = True
+
+        while waiting_for_restart:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    waiting_for_restart = False
+                elif event.type == pygame.MOUSEBUTTONDOWN and self.restart_button.collidepoint(event.pos):
+                    self.reset_game()
+                    waiting_for_restart = False
+
+                self.clock.tick(self.fps)
+
+        pygame.quit()
 
 
 class Main:
@@ -209,7 +297,11 @@ class Main:
         self.game = Game()
 
     def start(self):
-        self.game.run()
+        while True:
+            self.game.run()
+            if not self.game.paused:
+                break
+
         pygame.quit()
 
 
