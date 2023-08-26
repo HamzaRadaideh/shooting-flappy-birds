@@ -1,258 +1,218 @@
 import pygame
 import random
-import math
-
-pygame.init()
-
-audio_muted = False
-show_shortcuts_menu = False
-
-bird_amplitude = 50
-bird_frequency = 0.1
-
-width = 1000
-height = 600
-fps = 60
-
-# Colors
-White = (255, 255, 255)
-Black = (0, 0, 0)
-Red = (255, 0, 0)
-Blue = (0, 0, 255)
-Green = (0, 255, 0)
-Yellow = (255, 255, 0)
-
-player_health = 100
-max_health = 100
-health_regen_rate = 0.1
-damage_amount = 25
-
-screen = pygame.display.set_mode((width,height))
-pygame.display.set_caption("Shooting Flappy Birds")
-
-player_x = 50
-player_y = height //2
-player_speed = 5
-
-score = 0
-
-yellow_bird = []
-yellow_bird_speed = 2
-yellow_spawn_timer = 0
-
-blue_bird = []
-blue_bird_speed = 2
-blue_spawn_timer = 0
-
-red_bird = []
-red_bird_speed = 2
-red_spawn_timer = 0
-
-bullets = []
-bullet_speed = 10
-
-running = True
-clock = pygame.time.Clock()
-paused = False
-background = pygame.image.load("background.jpeg").convert()
-background = pygame.transform.scale(background, (width,height))
-start_time = pygame.time.get_ticks()
 
 
-while running:
-    screen.blit(background, (0, 0))
+class Bird:
+    yellow_bird_speed = 2  # Define the speed for yellow birds
+    blue_bird_speed = 1.5  # Define the speed for blue birds
+    red_bird_speed = 1     # Define the speed for red birds
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+    def __init__(self, x, y, image_path, speed):
+        self.x = x
+        self.y = y
+        self.image = pygame.image.load(image_path)
+        self.image = pygame.transform.scale(self.image, (40, 40))
+        self.speed = speed
+        self.rect = self.image.get_rect(center=(self.x, self.y))
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                bullets.append([player_x + 50, player_y + 25])
-            elif event.key == pygame.K_ESCAPE:
-                paused = not paused
-            elif event.key == pygame.K_a:
-                audio_muted = not audio_muted
-            elif event.key == pygame.K_h:
-                show_shortcuts_menu = not show_shortcuts_menu
+    def update(self):
+        self.x -= self.speed
+        self.rect.center = (self.x, self.y)
 
-    if paused:
-        # Draw a pause message or screen
-        pause_text = font.render("PAUSED", True, Red)
-        pause_rect = pause_text.get_rect(center=(width // 2, height // 2))
-        screen.blit(pause_text, pause_rect)
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
 
-        if audio_muted:
-            audio_text = font.render("Audio: Muted (Press 'A' to Unmute", True, Black)
-        else:
-            audio_text = font.render("Audio: On (Press 'A' to Mute)", True, Black)
 
-        if show_shortcuts_menu:
-            shortcuts_text = font.render("Keyboard Shortcuts:", True, Black)
-            shortcut_info = [
-                "A - Toggle Audio",
-                "H - Show/Hide Shortcuts",
-                "Esc - Pause/Resume",
-                "Space - Shoot",
-                "Up/Down - Move",
-            ]
-            y_position = 40
-            for shortcut in shortcut_info:
-                shortcut_render = font.render(shortcut, True, Black)
-                screen.blit(shortcut_render, (10, y_position))
-                y_position += 30
+class Player:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.speed = 5
+        self.health = 100
+        self.max_health = 100
+        self.rect = pygame.Rect(self.x, self.y, 50, 50)
 
-        # Display game progress (score)
-        progress_text = font.render(f"Score: {score} | Time: {run_time:.2f} seconds", True, Black)
-        screen.blit(progress_text, (10, 10))
-
-    else:
-        end_time = pygame.time.get_ticks()
-        run_time = (end_time - start_time) / 1000  # Convert to seconds
-
-        keys = pygame.key.get_pressed()
+    def move(self, keys):
         if keys[pygame.K_UP]:
-            player_y -= player_speed
+            self.y -= self.speed
         if keys[pygame.K_DOWN]:
-            player_y += player_speed
+            self.y += self.speed
 
-        # Update player
-        pygame.draw.rect(screen, Black, (player_x, player_y, 50, 50))
+    def update(self):
+        self.rect.topleft = (self.x, self.y)
 
-        # spawn yellow birds
-        yellow_spawn_timer += 2
-        if yellow_spawn_timer >= 100:
-            yellow_bird.append([width, random.randint(50, height - 50)])
-            yellow_spawn_timer = 0
+    def draw(self, screen):
+        pygame.draw.rect(screen, (0, 0, 0), self.rect)
 
-        # Update yellow birds
-        for bird in yellow_bird:
-            bird[0] -= yellow_bird_speed
-            bird[1] = height // 2 + bird_amplitude * math.sin(bird_frequency * bird[0])
-            pygame.draw.circle(screen, Yellow, (bird[0], bird[1]), 20)
 
-            # Check for collision with birds
-            for bird in yellow_bird:
-                bird_rect = pygame.Rect(bird[0], bird[1], 40, 40)
-                player_rect = pygame.Rect(player_x, player_y, 50, 50)
-                if player_rect.colliderect(bird_rect):
-                    player_health -= damage_amount
-                    yellow_bird.remove(bird)
+class Bullet:
+    def __init__(self, x, y, speed):
+        self.x = x
+        self.y = y
+        self.speed = speed
+        self.rect = pygame.Rect(self.x, self.y, 10, 10)  # Create a rect for collision detection
 
-            # Check for collision with bullets
-            for bullet in bullets:
-                if pygame.Rect(bullet[0], bullet[1], 10, 10).colliderect(pygame.Rect(bird[0], bird[1], 40, 40)):
-                    yellow_bird.remove(bird)
-                    bullets.remove(bullet)
-                    score += 1
+    def update(self):
+        self.x += self.speed
+        self.rect.topleft = (self.x, self.y)  # Update the rect position
 
-        # spawn blue birds
-        blue_spawn_timer += 1
-        if blue_spawn_timer >= 100:
-            blue_bird.append([width, random.randint(50, height - 50)])
-            blue_spawn_timer = 0
-        # Update blue birds
-        for bird in blue_bird:
-            bird[0] -= blue_bird_speed
-            bird[1] = height // 2 + bird_amplitude * math.sin(bird_frequency * bird[0])
-            pygame.draw.circle(screen, Blue, (bird[0], bird[1]), 20)
+    def draw(self, screen):
+        pygame.draw.rect(screen, (0, 0, 0), self.rect)
 
-            # Check for collision with birds
-            for bird in blue_bird:
-                bird_rect = pygame.Rect(bird[0], bird[1], 40, 40)
-                player_rect = pygame.Rect(player_x, player_y, 50, 50)
-                if player_rect.colliderect(bird_rect):
-                    player_health -= damage_amount
-                    blue_bird.remove(bird)
 
-            # Check for collision with bullets
-            for bullet in bullets:
-                if pygame.Rect(bullet[0], bullet[1], 10, 10).colliderect(pygame.Rect(bird[0], bird[1], 40, 40)):
-                    blue_bird.remove(bird)
-                    bullets.remove(bullet)
-                    score += 1
+class Game:
+    def __init__(self):
+        pygame.init()
 
-        # spawn red birds
-        red_spawn_timer += 0.5
-        if red_spawn_timer >= 100:
-            red_bird.append([width, random.randint(50, height - 50)])
-            red_spawn_timer = 0
+        self.width = 1000
+        self.height = 600
+        self.fps = 144
 
-        # Update red birds
-        for bird in red_bird:
-            bird[0] -= red_bird_speed
-            bird[1] = height // 2 + bird_amplitude * math.sin(bird_frequency * bird[0])
-            pygame.draw.circle(screen, Red, (bird[0], bird[1]), 20)
+        self.White = (255, 255, 255)
+        self.Black = (0, 0, 0)
+        self.Red = (255, 0, 0)
+        self.Blue = (0, 0, 255)
+        self.Green = (0, 255, 0)
+        self.Yellow = (255, 255, 0)
 
-            # Check for collision with birds
-            for bird in red_bird:
-                bird_rect = pygame.Rect(bird[0], bird[1], 40, 40)
-                player_rect = pygame.Rect(player_x, player_y, 50, 50)
-                if player_rect.colliderect(bird_rect):
-                    player_health -= damage_amount
-                    red_bird.remove(bird)
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption("Shooting Flappy Birds")
 
-            # Check for collision with bullets
-            for bullet in bullets:
-                if pygame.Rect(bullet[0], bullet[1], 10, 10).colliderect(pygame.Rect(bird[0], bird[1], 40, 40)):
-                    red_bird.remove(bird)
-                    bullets.remove(bullet)
-                    score += 1
+        self.player = Player(50, self.height // 2)
+        self.bullets = []
+        self.enemies = []
 
-        # Update bullets
-        for bullet in bullets:
-            bullet[0] += bullet_speed
-            pygame.draw.rect(screen, Black, (bullet[0], bullet[1], 10, 10))
+        self.clock = pygame.time.Clock()
+        self.running = True
+        self.paused = False
+        self.score = 0
+        self.background = pygame.image.load("background.jpeg").convert()
+        self.background = pygame.transform.scale(self.background, (self.width, self.height))
 
-            if bullet[0] > width:
-                bullets.remove(bullet)
+        self.health_regen_rate = 0.01  # Define the health regeneration rate
+        self.yellow_spawn_timer = 0    # Initialize the yellow bird spawn timer
+        self.blue_spawn_timer = 0      # Initialize the blue bird spawn timer
+        self.red_spawn_timer = 0       # Initialize the red bird spawn timer
 
-        # Health regeneration over time
-        if player_health < max_health:
-            player_health += health_regen_rate
-            if player_health > max_health:
-                player_health = max_health
+    def spawn_enemy(self, bird_class, bird_list, spawn_timer, spawn_frequency, image_path, speed):
+        spawn_timer += spawn_frequency
+        if spawn_timer >= 100:
+            bird_list.append(bird_class(self.width, random.randint(50, self.height - 50), image_path, speed))
+            spawn_timer = 0
+        return spawn_timer
 
-        # Check for game over condition
-        if player_health <= 0:
-            running = False  # End the game
+    def check_bullet_collisions(self, bullet_list, enemy_list):
+        for bullet in bullet_list:
+            for enemy in enemy_list:
+                if bullet.rect.colliderect(enemy.rect):
+                    bullet_list.remove(bullet)
+                    enemy_list.remove(enemy)
+                    self.score += 10  # Increase score when an enemy is hit
+                    return True
+        return False
 
-        # Draw health bar background
-        pygame.draw.rect(screen, Black, (10, 10, max_health + 4, 24))
-        pygame.draw.rect(screen, Red, (12, 12, max_health, 20))  # Max health
+    def check_collision(self, object1, object2_list):
+        for obj2 in object2_list:
+            if object1.rect.colliderect(obj2.rect):
+                object1.health -= 10
+                object2_list.remove(obj2)
+                return True
+        return False
 
-        # Draw current health
-        pygame.draw.rect(screen, Green, (12, 12, player_health, 20))
+    def run(self):
+        while self.running:
+            self.screen.blit(self.background, (0, 0))
 
-        # Inside the game loop, after updating the display
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
 
-        font = pygame.font.Font(None, 36)
-        score_text = font.render(f"Score: {score}", True, Black)
-        screen.blit(score_text, (10, height - 40))
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        self.bullets.append(Bullet(self.player.x + 50, self.player.y + 25, 5))
+                    elif event.key == pygame.K_ESCAPE:
+                        self.paused = not self.paused
 
-    # Update display
-    pygame.display.flip()
-    clock.tick(fps)
+            if self.paused:
+                pause_font = pygame.font.Font(None, 36)
+                pause_text = pause_font.render("Paused", True, self.White)
+                pause_rect = pause_text.get_rect(center=(self.width // 2, self.height // 2))
+                self.screen.blit(pause_text, pause_rect)
+                pass
+            else:
+                keys = pygame.key.get_pressed()
+                self.player.move(keys)
+                self.player.update()
+                self.player.draw(self.screen)
 
-# Calculate total run time
-end_time = pygame.time.get_ticks()
-run_time = (end_time - start_time) / 1000  # Convert to seconds
+                self.player.health = min(self.player.health + self.health_regen_rate, self.player.max_health)
 
-# Display game over message
-font = pygame.font.Font(None, 36)
-game_over_text = font.render("Game Over", True, Red)
-text_rect = game_over_text.get_rect(center=(width // 2, height // 2))
-screen.blit(game_over_text, text_rect)
+                # Spawn enemies and update them
+                self.yellow_spawn_timer = self.spawn_enemy(Bird, self.enemies, self.yellow_spawn_timer, 2,
+                                                           "yellow_bird.png", Bird.yellow_bird_speed)
+                self.blue_spawn_timer = self.spawn_enemy(Bird, self.enemies, self.blue_spawn_timer, 0.8,
+                                                         "blue_bird.png", Bird.blue_bird_speed)
+                self.red_spawn_timer = self.spawn_enemy(Bird, self.enemies, self.red_spawn_timer, 0.5, "red_bird.png",
+                                                        Bird.red_bird_speed)
 
-# Display score and run time
-score_text = font.render(f"Score: {score}", True, Black)
-run_time_text = font.render(f"Run Time: {run_time:.2f} seconds", True, Black)
-screen.blit(score_text, (width // 2 - score_text.get_width() // 2, height // 2 + 40))
-screen.blit(run_time_text, (width // 2 - run_time_text.get_width() // 2, height // 2 + 80))
+                for enemy in self.enemies:
+                    enemy.update()
+                    enemy.draw(self.screen)
 
-pygame.display.flip()
+                # Update bullets
+                for bullet in self.bullets:
+                    bullet.update()
+                    bullet.draw(self.screen)
+                    if bullet.x > self.width:
+                        self.bullets.remove(bullet)
 
-# Wait for a few seconds before quitting
-pygame.time.wait(5000)
+                # Handle collisions
+                for enemy in self.enemies:
+                    if self.check_collision(self.player, self.enemies):
+                        pass
+                    if self.check_bullet_collisions(self.bullets, self.enemies):
+                        pass
 
-pygame.quit()
+                health_bar_width = (self.player.health / self.player.max_health) * 200
+                pygame.draw.rect(self.screen, self.Red, (10, 10, 200, 20))  # Background
+                pygame.draw.rect(self.screen, self.Green, (10, 10, health_bar_width, 20))  # Health bar
+                pass
+
+            pygame.display.flip()
+            self.clock.tick(self.fps)
+
+        if not self.paused:
+            keys = pygame.key.get_pressed()
+            self.player.move(keys)
+            self.player.update()
+            self.player.draw(self.screen)
+            self.player.health = min(self.player.health + self.health_regen_rate, self.player.max_health)
+        pass
+
+        # Display game over message and score
+        if not self.running:
+            game_over_font = pygame.font.Font(None, 48)
+            game_over_text = game_over_font.render("Game Over", True, self.Red)
+            score_font = pygame.font.Font(None, 36)
+            score_text = score_font.render(f"Score: {self.score}", True, self.White)
+
+            game_over_rect = game_over_text.get_rect(center=(self.width // 2, self.height // 2 - 50))
+            score_rect = score_text.get_rect(center=(self.width // 2, self.height // 2 + 50))
+
+            self.screen.blit(game_over_text, game_over_rect)
+            self.screen.blit(score_text, score_rect)
+        pass
+
+
+class Main:
+    def __init__(self):
+        self.game = Game()
+
+    def start(self):
+        self.game.run()
+        pygame.quit()
+
+
+if __name__ == "__main__":
+    main = Main()
+    main.start()
