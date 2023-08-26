@@ -1,95 +1,14 @@
-# Import Statements
-import sys
-import pygame
 import random
+import sys
+
+import pygame
+
+from shooting_flappy_birds.AudioSettings import AudioSettings
+from shooting_flappy_birds.Bird import Bird
+from shooting_flappy_birds.Bullet import Bullet
+from shooting_flappy_birds.Player import Player
 
 
-# Define a class to store audio settings
-class AudioSettings:
-    def __init__(self):
-        self.background_music_volume = 0.5
-        self.bullet_sound_volume = 0.5  # Initialize bullet sound volume
-        self.bird_sound_volume = 0.5  # Initialize bird sound volume
-
-
-# Define the Bird class for different types of birds
-class Bird:
-    # Class-level attributes to define speeds for different bird types
-    yellow_bird_speed = 2  # Define the speed for yellow birds
-    blue_bird_speed = 1.5  # Define the speed for blue birds
-    red_bird_speed = 1     # Define the speed for red birds
-
-    # Constructor for Bird class
-    def __init__(self, x, y, image_path, speed):
-        self.x = x
-        self.y = y
-        self.image = pygame.image.load(image_path)
-        self.image = pygame.transform.scale(self.image, (40, 40))
-        self.speed = speed
-        self.rect = self.image.get_rect(center=(self.x, self.y))
-
-    # Update the bird's position
-    def update(self):
-        self.x -= self.speed
-        self.rect.center = (self.x, self.y)
-
-    # Draw the bird on the screen
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
-
-
-# Define the Bullet class
-class Bullet:
-    def __init__(self, x, y, speed):
-        self.x = x
-        self.y = y
-        self.speed = speed
-        self.rect = pygame.Rect(self.x, self.y, 10, 10)  # Create a rect for collision detection
-
-    def update(self):
-        self.x += self.speed
-        self.rect.topleft = (self.x, self.y)  # Update the rect position
-
-    def draw(self, screen):
-        pygame.draw.rect(screen, (0, 0, 0), self.rect)
-
-
-# Define the Player class
-class Player:
-    # Constructor for Player class
-    def __init__(self, x, y):
-        self.background_music_volume = None
-        self.height = 600
-        self.x = x
-        self.y = y
-        self.speed = 5
-        self.health = 100
-        self.max_health = 100
-        self.rect = pygame.Rect(self.x, self.y, 50, 50)
-        self.audio_settings = AudioSettings()  # Create an instance of AudioSettings
-
-    def move(self, keys):
-        if keys[pygame.K_UP]:
-            self.y -= self.speed
-        if keys[pygame.K_DOWN]:
-            self.y += self.speed
-
-        # Ensure the player doesn't go above the top boundary
-        if self.y < 0:
-            self.y = 0
-
-        # Ensure the player doesn't go below the bottom boundary
-        if self.y > self.height - self.rect.height:
-            self.y = self.height - self.rect.height
-
-    def update(self):
-        self.rect.topleft = (self.x, self.y)
-
-    def draw(self, screen):
-        pygame.draw.rect(screen, (0, 0, 0), self.rect)
-
-
-# Define the Game class
 class Game:
     def __init__(self):
         self.audio_settings = AudioSettings()
@@ -121,7 +40,7 @@ class Game:
         self.running = True
         self.paused = False
         self.score = 0
-        self.background = pygame.image.load("background.jpeg").convert()
+        self.background = pygame.image.load("assets/images/background.jpeg").convert()
         self.background = pygame.transform.scale(self.background, (self.width, self.height))
 
         self.health_regen_rate = 0.01  # Define the health regeneration rate
@@ -132,19 +51,19 @@ class Game:
         self.restart_button = None  # Initialize the restart_button variable
 
         # Load and play background music
-        self.background_music = pygame.mixer.Sound("music.mp3")  # Load the background music
+        self.background_music = pygame.mixer.Sound("assets/music/music.mp3")  # Load the background music
         self.background_music.set_volume(self.player.audio_settings.background_music_volume)
 
         self.background_music.play(-1)  # Play the music indefinitely (-1 means loop)
 
         # Load sound effects
-        self.bullet_sound = pygame.mixer.Sound("bullet.wav")
+        self.bullet_sound = pygame.mixer.Sound("assets/sound effects/bullet.wav")
         self.bullet_sound.set_volume(self.player.audio_settings.bullet_sound_volume)  # Set bullet sound volume
 
-        self.bird_sound = pygame.mixer.Sound("bird.wav")
+        self.bird_sound = pygame.mixer.Sound("assets/sound effects/bird.wav")
         self.bird_sound.set_volume(self.player.audio_settings.bird_sound_volume)  # Set bird sound volume
 
-        self.game_over_sound = pygame.mixer.Sound("game_over.wav")
+        self.game_over_sound = pygame.mixer.Sound("assets/sound effects/game_over.wav")
         self.bird_spawn_count = 0  # Initialize the bird spawn count
 
     # Display the start screen and handle user input
@@ -607,10 +526,11 @@ class Game:
 
                 # Spawn enemies and update them
                 self.yellow_spawn_timer = self.spawn_enemy(Bird, self.enemies, self.yellow_spawn_timer, 2,
-                                                           "yellow_bird.png", Bird.yellow_bird_speed)
+                                                           "assets/images/yellow_bird.png", Bird.yellow_bird_speed)
                 self.blue_spawn_timer = self.spawn_enemy(Bird, self.enemies, self.blue_spawn_timer, 0.8,
-                                                         "blue_bird.png", Bird.blue_bird_speed)
-                self.red_spawn_timer = self.spawn_enemy(Bird, self.enemies, self.red_spawn_timer, 0.5, "red_bird.png",
+                                                         "assets/images/blue_bird.png", Bird.blue_bird_speed)
+                self.red_spawn_timer = self.spawn_enemy(Bird, self.enemies, self.red_spawn_timer, 0.5,
+                                                        "assets/images/red_bird.png",
                                                         Bird.red_bird_speed)
 
                 self.bird_spawn_count += 1
@@ -743,26 +663,3 @@ class Game:
     # Wait for restart after game over
     def wait_for_restart(self):
         pass
-
-
-# Define the Main class
-class Main:
-    def __init__(self):
-        self.game = Game()
-
-    # Start the game by displaying the start screen and managing game flow
-    def start(self):
-        self.game.display_start_screen()
-        while True:
-            self.game.run()
-            if not self.game.paused:
-                self.game.display_game_over_screen()  # Display game over screen
-                self.game.wait_for_restart()  # Wait for restart
-
-    pygame.quit()
-
-
-# Entry point of the program
-if __name__ == "__main__":
-    main = Main()
-    main.start()
