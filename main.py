@@ -1,13 +1,26 @@
+# Import Statements
 import sys
 import pygame
 import random
+import pygame.mixer
 
 
+# Define a class to store audio settings
+class AudioSettings:
+    def __init__(self):
+        self.background_music_volume = 0.5  # Default volume for background music
+        self.sound_effects_volume = 0.5  # Default volume for sound effects
+    pass
+
+
+# Define the Bird class for different types of birds
 class Bird:
+    # Class-level attributes to define speeds for different bird types
     yellow_bird_speed = 2  # Define the speed for yellow birds
     blue_bird_speed = 1.5  # Define the speed for blue birds
     red_bird_speed = 1     # Define the speed for red birds
 
+    # Constructor for Bird class
     def __init__(self, x, y, image_path, speed):
         self.x = x
         self.y = y
@@ -16,24 +29,21 @@ class Bird:
         self.speed = speed
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
+    # Update the bird's position
     def update(self):
         self.x -= self.speed
         self.rect.center = (self.x, self.y)
 
+    # Draw the bird on the screen
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
 
-class AudioSettings:
-    def __init__(self):
-        self.background_music_volume = 0.5  # Default volume for background music
-        self.sound_effects_volume = 0.5  # Default volume for sound effects
-
-    pass
-
-
+# Define the Player class
 class Player:
+    # Constructor for Player class
     def __init__(self, x, y):
+        self.background_music_volume = None
         self.height = 600
         self.x = x
         self.y = y
@@ -41,12 +51,7 @@ class Player:
         self.health = 100
         self.max_health = 100
         self.rect = pygame.Rect(self.x, self.y, 50, 50)
-        self.audio_settings = self.AudioSettings()  # Create an instance of AudioSettings
-
-    class AudioSettings:
-        def __init__(self):
-            self.background_music_volume = 0.5  # Default volume for background music
-            self.sound_effects_volume = 0.5  # Default volume for sound effects
+        self.audio_settings = AudioSettings()  # Create an instance of AudioSettings
 
     def move(self, keys):
         if keys[pygame.K_UP]:
@@ -69,6 +74,7 @@ class Player:
         pygame.draw.rect(screen, (0, 0, 0), self.rect)
 
 
+# Define the Bullet class
 class Bullet:
     def __init__(self, x, y, speed):
         self.x = x
@@ -84,10 +90,14 @@ class Bullet:
         pygame.draw.rect(screen, (0, 0, 0), self.rect)
 
 
+# Define the Game class
 class Game:
     def __init__(self):
+        self.audio_settings = AudioSettings()
         pygame.init()
+        pygame.mixer.init()  # Initialize the mixer
 
+        # Define game parameters
         self.width = 1000
         self.height = 600
         self.fps = 144
@@ -99,10 +109,12 @@ class Game:
         self.Green = (0, 255, 0)
         self.Yellow = (255, 255, 0)
 
+        # Initialize pygame screen
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Shooting Flappy Birds")
 
-        self.player = Player(50, self.height // 2)
+        # Initialize player, bullets, enemies, and other game variables
+        self.player = Player(50, self.height // 2)  # Initialize player before accessing it
         self.bullets = []
         self.enemies = []
 
@@ -120,6 +132,12 @@ class Game:
 
         self.restart_button = None  # Initialize the restart_button variable
 
+        # Load and play background music
+        self.background_music = pygame.mixer.Sound("music.mp3")  # Load the background music
+        self.background_music.set_volume(self.player.audio_settings.background_music_volume)
+        self.background_music.play(-1)  # Play the music indefinitely (-1 means loop)
+
+    # Display the start screen and handle user input
     def display_start_screen(self):
         start_font = pygame.font.Font(None, 48)
         start_text = start_font.render("Shooting Flappy Birds", True, self.White)
@@ -169,6 +187,7 @@ class Game:
             pygame.display.flip()
             self.clock.tick(self.fps)
 
+    # Display the options menu and handle user input
     def display_options_menu(self):
         options_font = pygame.font.Font(None, 48)
         options_text = options_font.render("Options", True, self.White)
@@ -209,83 +228,149 @@ class Game:
             pygame.display.flip()
             self.clock.tick(self.fps)
 
+    # Restart the game
     def restart(self):
         self.reset_game()
         self.running = True
 
+    # Display audio settings and handle user input
     def display_audio_settings(self):
-        # Clear the screen
-        self.screen.blit(self.background, (0, 0))
 
-        # Display audio settings title
-        audio_title_font = pygame.font.Font(None, 48)
-        audio_title_text = audio_title_font.render("Audio Settings", True, self.White)
-        audio_title_rect = audio_title_text.get_rect(center=(self.width // 2, 100))
-        self.screen.blit(audio_title_text, audio_title_rect)
+        mouse_x, mouse_y = pygame.mouse.get_pos()  # Initialize mouse position
 
-        # Display background music volume slider
-        bg_music_label_font = pygame.font.Font(None, 32)
-        bg_music_label = bg_music_label_font.render("Background Music Volume", True, self.White)
-        bg_music_label_rect = bg_music_label.get_rect(midleft=(50, 200))
-        self.screen.blit(bg_music_label, bg_music_label_rect)
+        back_button_rect = pygame.Rect(self.width // 2 - 100, self.height - 100, 200, 50)
 
         bg_music_slider_rect = pygame.Rect(50, 250, 200, 10)
-        pygame.draw.rect(self.screen, self.White, bg_music_slider_rect)
-        bg_music_slider_handle_rect = pygame.Rect(
-            50 + (self.player.audio_settings.background_music_volume * 200), 245, 10, 20
-        )
-        pygame.draw.rect(self.screen, self.Yellow, bg_music_slider_handle_rect)
-
-        # Display sound effects volume slider
-        sound_effects_label_font = pygame.font.Font(None, 32)
-        sound_effects_label = sound_effects_label_font.render("Sound Effects Volume", True, self.White)
-        sound_effects_label_rect = sound_effects_label.get_rect(midleft=(50, 300))
-        self.screen.blit(sound_effects_label, sound_effects_label_rect)
-
         sound_effects_slider_rect = pygame.Rect(50, 350, 200, 10)
-        pygame.draw.rect(self.screen, self.White, sound_effects_slider_rect)
-        sound_effects_slider_handle_rect = pygame.Rect(
-            50 + (self.player.sound_effects_volume * 2), 345, 10, 20
+
+        bg_music_slider_handle_rect = pygame.Rect(
+            50 + (self.audio_settings.background_music_volume * 200), 245, 10, 20
         )
-        pygame.draw.rect(self.screen, self.Yellow, sound_effects_slider_handle_rect)
 
-        # Add logic to handle user interactions with the sliders
-        # Update the volume levels based on slider positions
-        # Use pygame.mixer to set the volume levels
+        sound_effects_slider_handle_rect = pygame.Rect(
+            50 + (self.audio_settings.sound_effects_volume * 200), 345, 10, 20
+        )
 
-        pygame.display.flip()
+        dragging_bg_music_slider = False
+        dragging_sound_effects_slider = False
 
-        waiting_for_input = True
-        while waiting_for_input:
+        while True:
+            self.screen.blit(self.background, (0, 0))
+
+            # Draw background rectangles for sliders
+            pygame.draw.rect(self.screen, self.White, bg_music_slider_rect)
+            pygame.draw.rect(self.screen, self.White, sound_effects_slider_rect)
+
+            audio_title_font = pygame.font.Font(None, 48)
+            audio_title_text = audio_title_font.render("Audio Settings", True, self.White)
+            audio_title_rect = audio_title_text.get_rect(center=(self.width // 2, 100))
+            self.screen.blit(audio_title_text, audio_title_rect)
+
+            bg_music_label_font = pygame.font.Font(None, 32)
+            bg_music_label = bg_music_label_font.render("Background Music Volume", True, self.White)
+            bg_music_label_rect = bg_music_label.get_rect(midleft=(50, 200))
+            self.screen.blit(bg_music_label, bg_music_label_rect)
+
+            bg_music_slider_rect = pygame.Rect(50, 250, 200, 10)
+            pygame.draw.rect(self.screen, self.White, bg_music_slider_rect)
+            pygame.draw.rect(self.screen, self.Yellow, bg_music_slider_handle_rect)
+
+            sound_effects_label_font = pygame.font.Font(None, 32)
+            sound_effects_label = sound_effects_label_font.render("Sound Effects Volume", True, self.White)
+            sound_effects_label_rect = sound_effects_label.get_rect(midleft=(50, 300))
+            self.screen.blit(sound_effects_label, sound_effects_label_rect)
+
+            sound_effects_slider_rect = pygame.Rect(50, 350, 200, 10)
+            pygame.draw.rect(self.screen, self.White, sound_effects_slider_rect)
+            pygame.draw.rect(self.screen, self.Yellow, sound_effects_slider_handle_rect)
+
+            # Draw the "Back" button
+            color = self.Green if back_button_rect.collidepoint(mouse_x, mouse_y) else self.Blue
+            pygame.draw.rect(self.screen, color, back_button_rect)
+            back_font = pygame.font.Font(None, 24)
+            back_text = back_font.render("Back", True, self.Black)
+            back_text_rect = back_text.get_rect(center=back_button_rect.center)
+            self.screen.blit(back_text, back_text_rect)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
 
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+                    if back_button_rect.collidepoint(mouse_x, mouse_y):
+                        return  # Return to the options menu
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_x, mouse_y = pygame.mouse.get_pos()
 
-                    # Check if the mouse click is within the slider handle for background music
                     if bg_music_slider_handle_rect.collidepoint(mouse_x, mouse_y):
-                        self.player.background_music_volume = (mouse_x - 50) / 200
-                        pygame.mixer.music.set_volume(self.player.background_music_volume)
+                        dragging_bg_music_slider = True
 
-                    # Check if the mouse click is within the slider handle for sound effects
                     if sound_effects_slider_handle_rect.collidepoint(mouse_x, mouse_y):
-                        self.player.sound_effects_volume = (mouse_x - 50) / 200
+                        dragging_sound_effects_slider = True
 
-            # Clear the screen
-            self.screen.blit(self.background, (0, 0))
+                if event.type == pygame.MOUSEBUTTONUP:
+                    dragging_bg_music_slider = False
+                    dragging_sound_effects_slider = False
 
-            # ... (code for displaying UI elements)
+            if dragging_bg_music_slider:
+                mouse_x, _ = pygame.mouse.get_pos()
+                self.audio_settings.background_music_volume = (
+                                                                          mouse_x - bg_music_slider_rect.left) / bg_music_slider_rect.width
+                self.background_music.set_volume(self.audio_settings.background_music_volume)
+                self.audio_settings.background_music_volume = max(0,
+                                                                  min(1, self.audio_settings.background_music_volume))
+                bg_music_slider_handle_rect.x = bg_music_slider_rect.left + int(
+                    bg_music_slider_rect.width * self.audio_settings.background_music_volume)
 
-            # Update slider positions based on volume levels
-            bg_music_slider_handle_rect.x = 50 + (self.player.background_music_volume * 200)
-            sound_effects_slider_handle_rect.x = 50 + (self.player.sound_effects_volume * 200)
+            if dragging_sound_effects_slider:
+                mouse_x, _ = pygame.mouse.get_pos()
+                self.audio_settings.sound_effects_volume = (
+                                                                       mouse_x - sound_effects_slider_rect.left) / sound_effects_slider_rect.width
+                self.audio_settings.sound_effects_volume = max(0, min(1, self.audio_settings.sound_effects_volume))
+                sound_effects_slider_handle_rect.x = sound_effects_slider_rect.left + int(
+                    sound_effects_slider_rect.width * self.audio_settings.sound_effects_volume)
+
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_UP]:
+                self.audio_settings.background_music_volume = min(1, self.audio_settings.background_music_volume + 0.05)
+                self.background_music.set_volume(self.audio_settings.background_music_volume)
+                bg_music_slider_handle_rect.x = bg_music_slider_rect.left + int(
+                    bg_music_slider_rect.width * self.audio_settings.background_music_volume)
+
+                self.audio_settings.sound_effects_volume = min(1, self.audio_settings.sound_effects_volume + 0.05)
+                sound_effects_slider_handle_rect.x = sound_effects_slider_rect.left + int(
+                    sound_effects_slider_rect.width * self.audio_settings.sound_effects_volume)
+
+            if keys[pygame.K_DOWN]:
+                self.audio_settings.background_music_volume = max(0, self.audio_settings.background_music_volume - 0.05)
+                self.background_music.set_volume(self.audio_settings.background_music_volume)
+                bg_music_slider_handle_rect.x = bg_music_slider_rect.left + int(
+                    bg_music_slider_rect.width * self.audio_settings.background_music_volume)
+
+                self.audio_settings.sound_effects_volume = max(0, self.audio_settings.sound_effects_volume - 0.05)
+                sound_effects_slider_handle_rect.x = sound_effects_slider_rect.left + int(
+                    sound_effects_slider_rect.width * self.audio_settings.sound_effects_volume)
+
+            # Update the slider position based on the volume settings
+            bg_music_slider_handle_rect.x = bg_music_slider_rect.left + int(
+                bg_music_slider_rect.width * self.audio_settings.background_music_volume)
+            sound_effects_slider_handle_rect.x = sound_effects_slider_rect.left + int(
+                sound_effects_slider_rect.width * self.audio_settings.sound_effects_volume)
+
+            pygame.draw.rect(self.screen, self.White, bg_music_slider_rect)
+            pygame.draw.rect(self.screen, self.Yellow, bg_music_slider_handle_rect)
+
+            pygame.draw.rect(self.screen, self.White, sound_effects_slider_rect)
+            pygame.draw.rect(self.screen, self.Yellow, sound_effects_slider_handle_rect)
 
             pygame.display.flip()
             self.clock.tick(self.fps)
 
+    # Display shortcuts settings and handle user input
     def display_shortcuts_settings(self):
         # Clear the screen
         self.screen.blit(self.background, (0, 0))
@@ -376,6 +461,7 @@ class Game:
                 text_rect = text.get_rect(center=(self.width // 2, 200 + i * 40))
                 self.screen.blit(text, text_rect)
 
+    # Display the game over screen and handle user input
     def display_game_over_screen(self):
         # ... (other code for displaying game over screen)
 
@@ -393,6 +479,7 @@ class Game:
             if pygame.mouse.get_pressed()[0]:
                 self.restart()  # Call the restart function
 
+    # Reset game variables for a new game
     def reset_game(self):
         self.player = Player(50, self.height // 2)
         self.bullets = []
@@ -401,6 +488,7 @@ class Game:
         self.player.health = self.player.max_health
         self.running = True
 
+    # Spawn enemies based on timers and update their positions
     def spawn_enemy(self, bird_class, bird_list, spawn_timer, spawn_frequency, image_path, speed):
         spawn_timer += spawn_frequency
         if spawn_timer >= 100:
@@ -408,6 +496,7 @@ class Game:
             spawn_timer = 0
         return spawn_timer
 
+    # Check for collisions between bullets and enemies
     def check_bullet_collisions(self, bullet_list, enemy_list):
         for bullet in bullet_list:
             for enemy in enemy_list:
@@ -418,6 +507,7 @@ class Game:
                     return True
         return False
 
+    # Check for collisions between two objects
     @staticmethod
     def check_collision(object1, object2_list):
         for obj2 in object2_list:
@@ -427,6 +517,7 @@ class Game:
                 return True
         return False
 
+    # Main game loop
     def run(self):
         while self.running:
             self.screen.blit(self.background, (0, 0))
@@ -581,14 +672,17 @@ class Game:
 
     pygame.quit()
 
+    # Wait for restart after game over
     def wait_for_restart(self):
         pass
 
 
+# Define the Main class
 class Main:
     def __init__(self):
         self.game = Game()
 
+    # Start the game by displaying the start screen and managing game flow
     def start(self):
         self.game.display_start_screen()
         while True:
@@ -600,6 +694,7 @@ class Main:
     pygame.quit()
 
 
+# Entry point of the program
 if __name__ == "__main__":
     main = Main()
     main.start()
