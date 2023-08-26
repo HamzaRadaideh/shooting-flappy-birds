@@ -1,3 +1,4 @@
+import sys
 import pygame
 import random
 
@@ -23,6 +24,14 @@ class Bird:
         screen.blit(self.image, self.rect)
 
 
+class AudioSettings:
+    def __init__(self):
+        self.background_music_volume = 0.5  # Default volume for background music
+        self.sound_effects_volume = 0.5  # Default volume for sound effects
+
+    pass
+
+
 class Player:
     def __init__(self, x, y):
         self.height = 600
@@ -32,6 +41,12 @@ class Player:
         self.health = 100
         self.max_health = 100
         self.rect = pygame.Rect(self.x, self.y, 50, 50)
+        self.audio_settings = self.AudioSettings()  # Create an instance of AudioSettings
+
+    class AudioSettings:
+        def __init__(self):
+            self.background_music_volume = 0.5  # Default volume for background music
+            self.sound_effects_volume = 0.5  # Default volume for sound effects
 
     def move(self, keys):
         if keys[pygame.K_UP]:
@@ -104,6 +119,279 @@ class Game:
         self.red_spawn_timer = 0       # Initialize the red bird spawn timer
 
         self.restart_button = None  # Initialize the restart_button variable
+
+    def display_start_screen(self):
+        start_font = pygame.font.Font(None, 48)
+        start_text = start_font.render("Shooting Flappy Birds", True, self.White)
+        start_rect = start_text.get_rect(center=(self.width // 2, self.height // 2 - 50))
+
+        back_button_rect = pygame.Rect(self.width // 2 - 100, self.height // 2 + 120, 200, 50)  # Add this line
+
+        start_button_rects = {
+            "Start Game": pygame.Rect(self.width // 2 - 100, self.height // 2, 200, 50),
+            "Options": pygame.Rect(self.width // 2 - 100, self.height // 2 + 60, 200, 50),
+            "Exit": pygame.Rect(self.width // 2 - 100, self.height // 2 + 120, 200, 50)
+        }
+        while True:
+            self.screen.blit(self.background, (0, 0))
+            self.screen.blit(start_text, start_rect)
+
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    for button, rect in start_button_rects.items():
+                        if rect.collidepoint(mouse_x, mouse_y):
+                            if button == "Start Game":
+                                self.run()  # Start the game
+                            elif button == "Options":
+                                self.display_options_menu()
+                                pass
+                            elif button == "Exit":
+                                pygame.quit()
+                                sys.exit()
+
+                    # Add this block to handle the "Back" button in options menu
+                    if back_button_rect.collidepoint(mouse_x, mouse_y):
+                        return
+
+            for button, rect in start_button_rects.items():
+                color = self.Green if rect.collidepoint(mouse_x, mouse_y) else self.Blue
+                pygame.draw.rect(self.screen, color, rect)
+                button_font = pygame.font.Font(None, 24)
+                button_text = button_font.render(button, True, self.Black)
+                button_text_rect = button_text.get_rect(center=rect.center)
+                self.screen.blit(button_text, button_text_rect)
+
+            pygame.display.flip()
+            self.clock.tick(self.fps)
+
+    def display_options_menu(self):
+        options_font = pygame.font.Font(None, 48)
+        options_text = options_font.render("Options", True, self.White)
+        options_rect = options_text.get_rect(center=(self.width // 2, self.height // 2 - 50))
+
+        audio_button_rect = pygame.Rect(self.width // 2 - 100, self.height // 2, 200, 50)
+        shortcuts_button_rect = pygame.Rect(self.width // 2 - 100, self.height // 2 + 60, 200, 50)
+        back_button_rect = pygame.Rect(self.width // 2 - 100, self.height // 2 + 120, 200, 50)  # Add this line
+
+        while True:
+            self.screen.blit(self.background, (0, 0))
+            self.screen.blit(options_text, options_rect)
+
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if audio_button_rect.collidepoint(mouse_x, mouse_y):
+                        self.display_audio_settings()  # Call the audio settings function
+                    elif shortcuts_button_rect.collidepoint(mouse_x, mouse_y):
+                        self.display_shortcuts_settings()  # Call the shortcuts settings function
+                        # After returning from shortcuts, the loop will continue and update the screen again
+                    elif back_button_rect.collidepoint(mouse_x, mouse_y):  # Add this block
+                        return
+
+            for rect, text in [(audio_button_rect, "Audio"), (shortcuts_button_rect, "Shortcuts"),
+                               (back_button_rect, "Back")]:  # Add this line
+                color = self.Green if rect.collidepoint(mouse_x, mouse_y) else self.Blue
+                pygame.draw.rect(self.screen, color, rect)
+                button_font = pygame.font.Font(None, 24)
+                button_text = button_font.render(text, True, self.Black)
+                button_text_rect = button_text.get_rect(center=rect.center)
+                self.screen.blit(button_text, button_text_rect)
+
+            pygame.display.flip()
+            self.clock.tick(self.fps)
+
+    def restart(self):
+        self.reset_game()
+        self.running = True
+
+    def display_audio_settings(self):
+        # Clear the screen
+        self.screen.blit(self.background, (0, 0))
+
+        # Display audio settings title
+        audio_title_font = pygame.font.Font(None, 48)
+        audio_title_text = audio_title_font.render("Audio Settings", True, self.White)
+        audio_title_rect = audio_title_text.get_rect(center=(self.width // 2, 100))
+        self.screen.blit(audio_title_text, audio_title_rect)
+
+        # Display background music volume slider
+        bg_music_label_font = pygame.font.Font(None, 32)
+        bg_music_label = bg_music_label_font.render("Background Music Volume", True, self.White)
+        bg_music_label_rect = bg_music_label.get_rect(midleft=(50, 200))
+        self.screen.blit(bg_music_label, bg_music_label_rect)
+
+        bg_music_slider_rect = pygame.Rect(50, 250, 200, 10)
+        pygame.draw.rect(self.screen, self.White, bg_music_slider_rect)
+        bg_music_slider_handle_rect = pygame.Rect(
+            50 + (self.player.audio_settings.background_music_volume * 200), 245, 10, 20
+        )
+        pygame.draw.rect(self.screen, self.Yellow, bg_music_slider_handle_rect)
+
+        # Display sound effects volume slider
+        sound_effects_label_font = pygame.font.Font(None, 32)
+        sound_effects_label = sound_effects_label_font.render("Sound Effects Volume", True, self.White)
+        sound_effects_label_rect = sound_effects_label.get_rect(midleft=(50, 300))
+        self.screen.blit(sound_effects_label, sound_effects_label_rect)
+
+        sound_effects_slider_rect = pygame.Rect(50, 350, 200, 10)
+        pygame.draw.rect(self.screen, self.White, sound_effects_slider_rect)
+        sound_effects_slider_handle_rect = pygame.Rect(
+            50 + (self.player.sound_effects_volume * 2), 345, 10, 20
+        )
+        pygame.draw.rect(self.screen, self.Yellow, sound_effects_slider_handle_rect)
+
+        # Add logic to handle user interactions with the sliders
+        # Update the volume levels based on slider positions
+        # Use pygame.mixer to set the volume levels
+
+        pygame.display.flip()
+
+        waiting_for_input = True
+        while waiting_for_input:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+                    # Check if the mouse click is within the slider handle for background music
+                    if bg_music_slider_handle_rect.collidepoint(mouse_x, mouse_y):
+                        self.player.background_music_volume = (mouse_x - 50) / 200
+                        pygame.mixer.music.set_volume(self.player.background_music_volume)
+
+                    # Check if the mouse click is within the slider handle for sound effects
+                    if sound_effects_slider_handle_rect.collidepoint(mouse_x, mouse_y):
+                        self.player.sound_effects_volume = (mouse_x - 50) / 200
+
+            # Clear the screen
+            self.screen.blit(self.background, (0, 0))
+
+            # ... (code for displaying UI elements)
+
+            # Update slider positions based on volume levels
+            bg_music_slider_handle_rect.x = 50 + (self.player.background_music_volume * 200)
+            sound_effects_slider_handle_rect.x = 50 + (self.player.sound_effects_volume * 200)
+
+            pygame.display.flip()
+            self.clock.tick(self.fps)
+
+    def display_shortcuts_settings(self):
+        # Clear the screen
+        self.screen.blit(self.background, (0, 0))
+
+        # Initialize mouse position
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+
+        # Display shortcuts settings title
+        shortcuts_title_font = pygame.font.Font(None, 48)
+        shortcuts_title_text = shortcuts_title_font.render("Shortcuts Settings", True, self.White)
+        shortcuts_title_rect = shortcuts_title_text.get_rect(center=(self.width // 2, 100))
+        self.screen.blit(shortcuts_title_text, shortcuts_title_rect)
+
+        # Display customizable actions and current key bindings
+        action_list = [
+            ("Move Up:", "K_UP"),
+            ("Move Down:", "K_DOWN"),
+            ("Shoot:", "K_SPACE"),
+            # Add more actions as needed
+        ]
+        y_offset = 200
+
+        for action, key_name in action_list:
+            action_font = pygame.font.Font(None, 32)
+            action_text = action_font.render(action, True, self.White)
+            action_rect = action_text.get_rect(midleft=(50, y_offset))
+            self.screen.blit(action_text, action_rect)
+
+            key_binding_font = pygame.font.Font(None, 32)
+            key_binding_text = key_binding_font.render(key_name, True, self.Yellow)
+            key_binding_rect = key_binding_text.get_rect(midleft=(250, y_offset))
+            self.screen.blit(key_binding_text, key_binding_rect)
+
+            y_offset += 60
+
+        # Define a dictionary to store the default key bindings
+        default_key_bindings = {
+            "Move Up": pygame.K_UP,
+            "Move Down": pygame.K_DOWN,
+            "Shoot": pygame.K_SPACE,
+            "Pause": pygame.K_ESCAPE
+        }
+
+        # Create a dictionary to store the current key bindings
+        key_bindings = dict(default_key_bindings)
+
+        back_button_rect = pygame.Rect(self.width // 2 - 100, self.height - 100, 200, 50)
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()  # Update mouse position
+                    if back_button_rect.collidepoint(mouse_x, mouse_y):
+                        return  # Return to the previous menu
+                elif event.type == pygame.KEYDOWN:
+                    for action, key in key_bindings.items():
+                        if key == event.key:
+                            # Display a message indicating the key is already bound to an action
+                            print(f"Key {pygame.key.name(key)} is already bound to {action}")
+                            break
+                    else:
+                        # Update the key binding for the selected action
+                        key_bindings[selected_action] = event.key
+                        selected_action = None
+
+            # Draw the back button and its text
+            color = self.Green if back_button_rect.collidepoint(mouse_x, mouse_y) else self.Blue
+            pygame.draw.rect(self.screen, color, back_button_rect)
+            back_font = pygame.font.Font(None, 24)
+            back_text = back_font.render("Back", True, self.Black)
+            back_text_rect = back_text.get_rect(center=back_button_rect.center)
+            self.screen.blit(back_text, back_text_rect)
+
+            pygame.display.flip()
+            self.clock.tick(self.fps)
+
+            # Clear the screen
+            self.screen.blit(self.background, (0, 0))
+
+            # ... (code for displaying UI elements)
+
+            # Display the current key bindings
+            for i, (action, key) in enumerate(key_bindings.items()):
+                text = key_binding_font.render(f"{action}: {pygame.key.name(key)}", True, self.Black)
+                text_rect = text.get_rect(center=(self.width // 2, 200 + i * 40))
+                self.screen.blit(text, text_rect)
+
+    def display_game_over_screen(self):
+        # ... (other code for displaying game over screen)
+
+        restart_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 150, 100, 50)
+        pygame.draw.rect(self.screen, self.Green, restart_button)
+
+        restart_font = pygame.font.Font(None, 24)
+        restart_text = restart_font.render("Restart", True, self.Black)
+        restart_text_rect = restart_text.get_rect(center=restart_button.center)
+        self.screen.blit(restart_text, restart_text_rect)
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if restart_button.collidepoint(mouse_x, mouse_y):
+            pygame.draw.rect(self.screen, self.Yellow, restart_button)
+            if pygame.mouse.get_pressed()[0]:
+                self.restart()  # Call the restart function
 
     def reset_game(self):
         self.player = Player(50, self.height // 2)
@@ -276,20 +564,25 @@ class Game:
             pass
 
         pygame.display.flip()  # Update the display
-        waiting_for_restart = True
 
+        waiting_for_restart = True
         while waiting_for_restart:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
                     waiting_for_restart = False
-                elif event.type == pygame.MOUSEBUTTONDOWN and self.restart_button.collidepoint(event.pos):
+                elif event.type == pygame.MOUSEBUTTONDOWN and restart_button.collidepoint(event.pos):
                     self.reset_game()
                     waiting_for_restart = False
 
-                self.clock.tick(self.fps)
+            self.clock.tick(self.fps)  # Add this line to control loop speed
 
-        pygame.quit()
+        pygame.display.flip()
+
+    pygame.quit()
+
+    def wait_for_restart(self):
+        pass
 
 
 class Main:
@@ -297,12 +590,14 @@ class Main:
         self.game = Game()
 
     def start(self):
+        self.game.display_start_screen()
         while True:
             self.game.run()
             if not self.game.paused:
-                break
+                self.game.display_game_over_screen()  # Display game over screen
+                self.game.wait_for_restart()  # Wait for restart
 
-        pygame.quit()
+    pygame.quit()
 
 
 if __name__ == "__main__":
