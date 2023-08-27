@@ -7,7 +7,7 @@ class Player:
     # Constructor for Player class
     def __init__(self, x, y, image_path):
         self.background_music_volume = None
-        self.height = 600
+        self.height = 720
         self.x = x
         self.y = y
         self.image = pygame.image.load(image_path)
