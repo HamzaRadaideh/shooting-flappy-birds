@@ -462,6 +462,7 @@ class Game:
         self.score = 0
         self.player.health = self.player.max_health
         self.running = True
+        self.run()
 
     # Spawn enemies based on timers and update their positions
     def spawn_enemy(self, bird_class, bird_list, spawn_timer, spawn_frequency, image_path, speed):
