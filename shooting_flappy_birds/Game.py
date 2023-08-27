@@ -179,8 +179,8 @@ class Game:
         back_button_rect = pygame.Rect(self.width // 2 - 100, self.height - 100, 200, 50)
 
         bg_music_slider_rect = pygame.Rect(50, 250, 200, 10)
-        bullet_effects_slider_rect = pygame.Rect(50, 250, 200, 10)
-        bird_effects_slider_rect = pygame.Rect(50, 250, 200, 10)
+        bullet_effects_slider_rect = pygame.Rect(50, 350, 200, 10)
+        bird_effects_slider_rect = pygame.Rect(50, 450, 200, 10)
 
         bg_music_slider_handle_rect = pygame.Rect(
             50 + (self.audio_settings.background_music_volume * 200), 245, 10, 20
@@ -190,7 +190,7 @@ class Game:
             50 + (self.audio_settings.bullet_sound_volume * 200), 345, 10, 20
         )
         bird_effects_slider_handle_rect = pygame.Rect(
-            50 + (self.audio_settings.bird_sound_volume * 200), 345, 10, 20
+            50 + (self.audio_settings.bird_sound_volume * 200), 445, 10, 20
         )
 
         dragging_bg_music_slider = False
@@ -263,17 +263,42 @@ class Game:
 
                     if bg_music_slider_handle_rect.collidepoint(mouse_x, mouse_y):
                         dragging_bg_music_slider = True
+                        dragging_bullet_slider = False
+                        dragging_bird_slider = False
 
                     if bullet_effects_slider_handle_rect.collidepoint(mouse_x, mouse_y):
                         dragging_bullet_slider = True
+                        dragging_bg_music_slider = False
+                        dragging_bird_slider = False
 
                     if bird_effects_slider_handle_rect.collidepoint(mouse_x, mouse_y):
                         dragging_bird_slider = True
+                        dragging_bg_music_slider = False
+                        dragging_bullet_slider = False
 
                 if event.type == pygame.MOUSEBUTTONUP:
                     dragging_bg_music_slider = False
                     dragging_bullet_slider = False
                     dragging_bird_slider = False
+
+            # Update the slider position based on the volume settings
+            bg_music_slider_handle_rect.x = bg_music_slider_rect.left + int(
+                bg_music_slider_rect.width * self.audio_settings.background_music_volume)
+
+            bullet_effects_slider_handle_rect.x = bullet_effects_slider_rect.left + int(
+                bullet_effects_slider_rect.width * self.audio_settings.bullet_sound_volume)
+
+            bird_effects_slider_handle_rect.x = bird_effects_slider_rect.left + int(
+                bird_effects_slider_rect.width * self.audio_settings.bird_sound_volume)
+
+            pygame.draw.rect(self.screen, self.White, bg_music_slider_rect)
+            pygame.draw.rect(self.screen, self.Yellow, bg_music_slider_handle_rect)
+
+            pygame.draw.rect(self.screen, self.White, bullet_effects_slider_rect)
+            pygame.draw.rect(self.screen, self.Yellow, bullet_effects_slider_handle_rect)
+
+            pygame.draw.rect(self.screen, self.White, bird_effects_slider_rect)
+            pygame.draw.rect(self.screen, self.Yellow, bird_effects_slider_handle_rect)
 
             if dragging_bg_music_slider:
                 mouse_x, _ = pygame.mouse.get_pos()
@@ -297,58 +322,6 @@ class Game:
                 self.bird_sound.set_volume(self.audio_settings.bird_sound_volume)
                 self.audio_settings.bird_sound_volume = max(0, min(1, self.audio_settings.bird_sound_volume))
                 bird_effects_slider_rect.x = bird_effects_slider_rect.left + int(bird_effects_slider_rect.width * self.audio_settings.bird_sound_volume)
-
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_UP]:
-                self.audio_settings.background_music_volume = min(1, self.audio_settings.background_music_volume + 0.05)
-                self.background_music.set_volume(self.audio_settings.background_music_volume)
-                bg_music_slider_handle_rect.x = bg_music_slider_rect.left + int(
-                    bg_music_slider_rect.width * self.audio_settings.background_music_volume)
-
-                self.audio_settings.bullet_sound_volume = min(1, self.audio_settings.bullet_sound_volume + 0.05)
-                self.bullet_sound.set_volume(self.audio_settings.bullet_sound_volume)
-                bullet_effects_slider_handle_rect.x = bullet_effects_slider_rect.left + int(
-                    bullet_effects_slider_rect.width * self.audio_settings.bullet_sound_volume)
-
-                self.audio_settings.bird_sound_volume = min(1, self.audio_settings.bird_sound_volume + 0.05)
-                self.bird_sound.set_volume(self.audio_settings.bird_sound_volume)
-                bird_effects_slider_handle_rect.x = bird_effects_slider_rect.left + int(
-                    bird_effects_slider_rect.width * self.audio_settings.bird_sound_volume)
-
-            if keys[pygame.K_DOWN]:
-                self.audio_settings.background_music_volume = max(0, self.audio_settings.background_music_volume - 0.05)
-                self.background_music.set_volume(self.audio_settings.background_music_volume)
-                bg_music_slider_handle_rect.x = bg_music_slider_rect.left + int(
-                    bg_music_slider_rect.width * self.audio_settings.background_music_volume)
-
-                self.audio_settings.bullet_sound_volume = max(0, self.audio_settings.bullet_sound_volume - 0.05)
-                self.bullet_sound.set_volume(self.audio_settings.bullet_sound_volume)
-                bullet_effects_slider_handle_rect.x = bullet_effects_slider_rect.left + int(
-                    bullet_effects_slider_rect.width * self.audio_settings.bullet_sound_volume)
-
-                self.audio_settings.bird_sound_volume = max(0, self.audio_settings.bird_sound_volume - 0.05)
-                self.bird_sound.set_volume(self.audio_settings.bird_sound_volume)
-                bird_effects_slider_handle_rect.x = bird_effects_slider_rect.left + int(
-                    bird_effects_slider_rect.width * self.audio_settings.bird_sound_volume)
-
-            # Update the slider position based on the volume settings
-            bg_music_slider_handle_rect.x = bg_music_slider_rect.left + int(
-                bg_music_slider_rect.width * self.audio_settings.background_music_volume)
-
-            bullet_effects_slider_handle_rect.x = bullet_effects_slider_rect.left + int(
-                bullet_effects_slider_rect.width * self.audio_settings.bullet_sound_volume)
-
-            bird_effects_slider_handle_rect.x = bird_effects_slider_rect.left + int(
-                bird_effects_slider_rect.width * self.audio_settings.bird_sound_volume)
-
-            pygame.draw.rect(self.screen, self.White, bg_music_slider_rect)
-            pygame.draw.rect(self.screen, self.Yellow, bg_music_slider_handle_rect)
-
-            pygame.draw.rect(self.screen, self.White, bullet_effects_slider_rect)
-            pygame.draw.rect(self.screen, self.Yellow, bullet_effects_slider_handle_rect)
-
-            pygame.draw.rect(self.screen, self.White, bird_effects_slider_rect)
-            pygame.draw.rect(self.screen, self.Yellow, bird_effects_slider_handle_rect)
 
             pygame.display.flip()
             self.clock.tick(self.fps)
@@ -492,9 +465,10 @@ class Game:
         if spawn_timer >= 100:
             bird_list.append(bird_class(self.width, random.randint(50, self.height - 50), image_path, speed))
             spawn_timer = 0
+
+        return spawn_timer
         self.bird_sound.set_volume(self.audio_settings.bird_sound_volume)  # Update bird sound volume
         self.bird_sound.play()  # Play the bird sound effect
-        return spawn_timer
 
     # Check for collisions between bullets and enemies
     def check_bullet_collisions(self, bullet_list, enemy_list):
