@@ -1,6 +1,5 @@
 import random
 import sys
-
 import pygame
 
 from shooting_flappy_birds.AudioSettings import AudioSettings
@@ -16,9 +15,9 @@ class Game:
         pygame.mixer.init()  # Initialize the mixer
 
         # Define game parameters
-        self.width = 1000
-        self.height = 600
-        self.fps = 144
+        self.width = 1280
+        self.height = 720
+        self.fps = 90
 
         self.White = (255, 255, 255)
         self.Black = (0, 0, 0)
@@ -40,7 +39,7 @@ class Game:
         self.running = True
         self.paused = False
         self.score = 0
-        self.background = pygame.image.load("assets/images/background.jpeg").convert()
+        self.background = pygame.image.load("assets/images/background.jpg").convert()
         self.background = pygame.transform.scale(self.background, (self.width, self.height))
 
         self.health_regen_rate = 0.01  # Define the health regeneration rate
@@ -77,17 +76,16 @@ class Game:
         self.player.health = self.player.max_health
         self.running = True
 
-
         start_font = pygame.font.Font(None, 48)
-        start_text = start_font.render("Shooting Flappy Birds", True, self.White)
-        start_rect = start_text.get_rect(center=(self.width // 2, self.height // 2 - 50))
+        start_text = start_font.render("Shooting Flappy Birds", True, self.Red)
+        start_rect = start_text.get_rect(center=(self.width // 2, self.height // 3 - 50))
 
         back_button_rect = pygame.Rect(self.width // 2 - 100, self.height // 2 + 120, 200, 50)  # Add this line
 
         start_button_rects = {
-            "Start Game": pygame.Rect(self.width // 2 - 100, self.height // 2, 200, 50),
-            "Options": pygame.Rect(self.width // 2 - 100, self.height // 2 + 60, 200, 50),
-            "Exit": pygame.Rect(self.width // 2 - 100, self.height // 2 + 120, 200, 50)
+            "Start Game": pygame.Rect(self.width // 2 - 100, self.height // 2.5, 200, 50),
+            "Options": pygame.Rect(self.width // 2 - 100, self.height // 2.5 + 80, 200, 50),
+            "Exit": pygame.Rect(self.width // 2 - 100, self.height // 2.5 + 160, 200, 50)
         }
         while True:
             self.screen.blit(self.background, (0, 0))
@@ -116,7 +114,7 @@ class Game:
                         return
 
             for button, rect in start_button_rects.items():
-                color = self.Green if rect.collidepoint(mouse_x, mouse_y) else self.Blue
+                color = self.Green if rect.collidepoint(mouse_x, mouse_y) else self.White
                 pygame.draw.rect(self.screen, color, rect)
                 button_font = pygame.font.Font(None, 24)
                 button_text = button_font.render(button, True, self.Black)
@@ -130,11 +128,11 @@ class Game:
     def display_options_menu(self):
         options_font = pygame.font.Font(None, 48)
         options_text = options_font.render("Options", True, self.White)
-        options_rect = options_text.get_rect(center=(self.width // 2, self.height // 2 - 50))
+        options_rect = options_text.get_rect(center=(self.width // 2, self.height // 3 - 50))
 
-        audio_button_rect = pygame.Rect(self.width // 2 - 100, self.height // 2, 200, 50)
-        shortcuts_button_rect = pygame.Rect(self.width // 2 - 100, self.height // 2 + 60, 200, 50)
-        back_button_rect = pygame.Rect(self.width // 2 - 100, self.height // 2 + 120, 200, 50)  # Add this line
+        audio_button_rect = pygame.Rect(self.width // 2 - 100, self.height // 2.5, 200, 50)
+        shortcuts_button_rect = pygame.Rect(self.width // 2 - 100, self.height // 2.5 + 80, 200, 50)
+        back_button_rect = pygame.Rect(self.width // 2 - 100, self.height // 2.5 + 160, 200, 50)  # Add this line
 
         while True:
             self.screen.blit(self.background, (0, 0))
@@ -155,8 +153,9 @@ class Game:
                     elif back_button_rect.collidepoint(mouse_x, mouse_y):  # Add this block
                         return
 
-            for rect, text in [(audio_button_rect, "Audio"), (shortcuts_button_rect, "Shortcuts"), (back_button_rect, "Back")]:
-                color = self.Green if rect.collidepoint(mouse_x, mouse_y) else self.Blue
+            for rect, text in [(audio_button_rect, "Audio"),
+                               (shortcuts_button_rect, "Shortcuts"), (back_button_rect, "Back")]:
+                color = self.Green if rect.collidepoint(mouse_x, mouse_y) else self.White
                 pygame.draw.rect(self.screen, color, rect)
                 button_font = pygame.font.Font(None, 24)
                 button_text = button_font.render(text, True, self.Black)
@@ -240,7 +239,7 @@ class Game:
             pygame.draw.rect(self.screen, self.Yellow, bird_effects_slider_handle_rect)
 
             # Draw the "Back" button
-            color = self.Green if back_button_rect.collidepoint(mouse_x, mouse_y) else self.Blue
+            color = self.Green if back_button_rect.collidepoint(mouse_x, mouse_y) else self.White
             pygame.draw.rect(self.screen, color, back_button_rect)
             back_font = pygame.font.Font(None, 24)
             back_text = back_font.render("Back", True, self.Black)
@@ -302,26 +301,35 @@ class Game:
 
             if dragging_bg_music_slider:
                 mouse_x, _ = pygame.mouse.get_pos()
-                self.audio_settings.background_music_volume = (mouse_x - bg_music_slider_rect.left) / bg_music_slider_rect.width
+                self.audio_settings.background_music_volume = ((mouse_x - bg_music_slider_rect.left)
+                                                               / bg_music_slider_rect.width)
                 self.background_music.set_volume(self.audio_settings.background_music_volume)
-                self.audio_settings.background_music_volume = max(0, min(1, self.audio_settings.background_music_volume))
-                bg_music_slider_handle_rect.x = bg_music_slider_rect.left + int(bg_music_slider_rect.width * self.audio_settings.background_music_volume)
+                self.audio_settings.background_music_volume = max(0,
+                                                                  min(1, self.audio_settings.background_music_volume))
+                bg_music_slider_handle_rect.x = bg_music_slider_rect.left + int(
+                    bg_music_slider_rect.width * self.audio_settings.background_music_volume)
 
             # Update bullet sound effects volume based on slider position
             if dragging_bullet_slider:
                 mouse_x, _ = pygame.mouse.get_pos()
-                self.audio_settings.bullet_sound_volume = (mouse_x - bullet_effects_slider_rect.left) / bullet_effects_slider_rect.width
+                self.audio_settings.bullet_sound_volume = ((mouse_x - bullet_effects_slider_rect.left)
+                                                           / bullet_effects_slider_rect.width)
                 self.bullet_sound.set_volume(self.audio_settings.bullet_sound_volume)
-                self.audio_settings.bullet_sound_volume = max(0, min(1, self.audio_settings.bullet_sound_volume))
-                bullet_effects_slider_handle_rect.x = bullet_effects_slider_rect.left + int(bullet_effects_slider_rect.width * self.audio_settings.bullet_sound_volume)
+                self.audio_settings.bullet_sound_volume = max(0,
+                                                              min(1, self.audio_settings.bullet_sound_volume))
+                bullet_effects_slider_handle_rect.x = bullet_effects_slider_rect.left + int(
+                    bullet_effects_slider_rect.width * self.audio_settings.bullet_sound_volume)
 
             # Update bird sound effects volume based on slider position
             if dragging_bird_slider:
                 mouse_x, _ = pygame.mouse.get_pos()
-                self.audio_settings.bird_sound_volume = (mouse_x - bird_effects_slider_rect.left) / bird_effects_slider_rect.width
+                self.audio_settings.bird_sound_volume = ((mouse_x - bird_effects_slider_rect.left)
+                                                         / bird_effects_slider_rect.width)
                 self.bird_sound.set_volume(self.audio_settings.bird_sound_volume)
-                self.audio_settings.bird_sound_volume = max(0, min(1, self.audio_settings.bird_sound_volume))
-                bird_effects_slider_rect.x = bird_effects_slider_rect.left + int(bird_effects_slider_rect.width * self.audio_settings.bird_sound_volume)
+                self.audio_settings.bird_sound_volume = max(0,
+                                                            min(1, self.audio_settings.bird_sound_volume))
+                bird_effects_slider_handle_rect.x = bird_effects_slider_rect.left + int(
+                    bird_effects_slider_rect.width * self.audio_settings.bird_sound_volume)
 
             pygame.display.flip()
             self.clock.tick(self.fps)
@@ -396,7 +404,7 @@ class Game:
                         selected_action = None
 
             # Draw the back button and its text
-            color = self.Green if back_button_rect.collidepoint(mouse_x, mouse_y) else self.Blue
+            color = self.Green if back_button_rect.collidepoint(mouse_x, mouse_y) else self.White
             pygame.draw.rect(self.screen, color, back_button_rect)
             back_font = pygame.font.Font(None, 24)
             back_text = back_font.render("Back", True, self.Black)
@@ -409,11 +417,9 @@ class Game:
             # Clear the screen
             self.screen.blit(self.background, (0, 0))
 
-            # ... (code for displaying UI elements)
-
             # Display the current key bindings
             for i, (action, key) in enumerate(key_bindings.items()):
-                text = key_binding_font.render(f"{action}: {pygame.key.name(key)}", True, self.Black)
+                text = key_binding_font.render(f"{action}: {pygame.key.name(key)}", True, self.White)
                 text_rect = text.get_rect(center=(self.width // 2, 200 + i * 40))
                 self.screen.blit(text, text_rect)
 
@@ -423,15 +429,16 @@ class Game:
         self.bullet_sound.set_volume(self.audio_settings.bullet_sound_volume)  # Update bullet sound volume
         self.bullet_sound.play()  # Play the bullet sound effect
 
-        restart_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 150, 100, 50)
+        restart_button = pygame.Rect(self.width // 2 - 100, self.height // 2 + 80, 200, 50)
         pygame.draw.rect(self.screen, self.Green, restart_button)
+
 
         restart_font = pygame.font.Font(None, 24)
         restart_text = restart_font.render("Restart", True, self.Black)
         restart_text_rect = restart_text.get_rect(center=restart_button.center)
         self.screen.blit(restart_text, restart_text_rect)
 
-        main_menu_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 210, 100, 50)
+        main_menu_button = pygame.Rect(self.width // 2 - 100, self.height // 2 + 160, 200, 50)
         pygame.draw.rect(self.screen, self.Green, main_menu_button)
 
         main_menu_font = pygame.font.Font(None, 24)
@@ -467,8 +474,6 @@ class Game:
             spawn_timer = 0
 
         return spawn_timer
-        self.bird_sound.set_volume(self.audio_settings.bird_sound_volume)  # Update bird sound volume
-        self.bird_sound.play()  # Play the bird sound effect
 
     # Check for collisions between bullets and enemies
     def check_bullet_collisions(self, bullet_list, enemy_list):
@@ -600,39 +605,39 @@ class Game:
 
             game_over_font = pygame.font.Font(None, 48)
             game_over_text = game_over_font.render("Game Over", True, self.Red)
-            game_over_rect = game_over_text.get_rect(center=(self.width // 2, self.height // 2))
+            game_over_rect = game_over_text.get_rect(center=(self.width // 2, self.height // 3))
 
             # Display score
             score_font = pygame.font.Font(None, 36)
             score_text = score_font.render(f"Score: {self.score}", True, self.White)
-            score_rect = score_text.get_rect(center=(self.width // 2, self.height // 2 + 50))
+            score_rect = score_text.get_rect(center=(self.width // 2, self.height // 3 + 50))
 
             # Display runtime
             runtime = pygame.time.get_ticks() // 1000  # Get runtime in seconds
             runtime_font = pygame.font.Font(None, 24)
             runtime_text = runtime_font.render(f"Runtime: {runtime} seconds", True, self.White)
-            runtime_text_rect = runtime_text.get_rect(center=(self.width // 2, self.height // 2 + 100))
+            runtime_text_rect = runtime_text.get_rect(center=(self.width // 2, self.height // 3 + 100))
 
             self.screen.blit(game_over_text, game_over_rect)
             self.screen.blit(score_text, score_rect)
             self.screen.blit(runtime_text, runtime_text_rect)
 
-            self.restart_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 150, 100, 50)
+            self.restart_button = pygame.Rect(self.width // 2 - 100, self.height // 2 + 80, 200, 50)
             pygame.draw.rect(self.screen, self.Green, self.restart_button)
 
             # Restart button
-            restart_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 150, 100, 50)
+            restart_button = pygame.Rect(self.width // 2 - 100, self.height // 2 + 80, 200, 50)
             pygame.draw.rect(self.screen, self.Green, restart_button)
             restart_font = pygame.font.Font(None, 24)
             restart_text = restart_font.render("Restart", True, self.Black)
             restart_text_rect = restart_text.get_rect(center=restart_button.center)
             self.screen.blit(restart_text, restart_text_rect)
 
-            self.main_menu_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 210, 100, 50)
+            self.main_menu_button = pygame.Rect(self.width // 2 - 100, self.height // 2 + 160, 200, 50)
             pygame.draw.rect(self.screen, self.Green, self.main_menu_button)
 
             # Restart button
-            main_menu_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 210, 100, 50)
+            main_menu_button = pygame.Rect(self.width // 2 - 100, self.height // 2 + 160, 200, 50)
             pygame.draw.rect(self.screen, self.Green, main_menu_button)
             main_menu_font = pygame.font.Font(None, 24)
             main_menu_text = main_menu_font.render("Main menu", True, self.Black)
