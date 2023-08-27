@@ -49,6 +49,7 @@ class Game:
         self.red_spawn_timer = 0       # Initialize the red bird spawn timer
 
         self.restart_button = None  # Initialize the restart_button variable
+        self.main_menu_button = None  # Initialize the restart_button variable
 
         # Load and play background music
         self.background_music = pygame.mixer.Sound("assets/music/music.mp3")  # Load the background music
@@ -68,6 +69,15 @@ class Game:
 
     # Display the start screen and handle user input
     def display_start_screen(self):
+
+        self.player = Player(50, self.height // 2, "assets/images/player.png")
+        self.bullets = []
+        self.enemies = []
+        self.score = 0
+        self.player.health = self.player.max_health
+        self.running = True
+
+
         start_font = pygame.font.Font(None, 48)
         start_text = start_font.render("Shooting Flappy Birds", True, self.White)
         start_rect = start_text.get_rect(center=(self.width // 2, self.height // 2 - 50))
@@ -448,11 +458,23 @@ class Game:
         restart_text_rect = restart_text.get_rect(center=restart_button.center)
         self.screen.blit(restart_text, restart_text_rect)
 
+        main_menu_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 210, 100, 50)
+        pygame.draw.rect(self.screen, self.Green, main_menu_button)
+
+        main_menu_font = pygame.font.Font(None, 24)
+        main_menu_text = main_menu_font.render("Main menu", True, self.Black)
+        main_menu_text_rect = main_menu_text.get_rect(center=main_menu_button.center)
+        self.screen.blit(main_menu_text, main_menu_text_rect)
+
         mouse_x, mouse_y = pygame.mouse.get_pos()
         if restart_button.collidepoint(mouse_x, mouse_y):
             pygame.draw.rect(self.screen, self.Yellow, restart_button)
             if pygame.mouse.get_pressed()[0]:
                 self.restart()  # Call the restart function
+        elif main_menu_button.collidepoint(mouse_x, mouse_y):
+            pygame.draw.rect(self.screen, self.Yellow, main_menu_button)
+            if pygame.mouse.get_pressed()[0]:
+                self.display_start_screen()
 
     # Reset game variables for a new game
     def reset_game(self):
@@ -632,12 +654,26 @@ class Game:
             restart_text_rect = restart_text.get_rect(center=restart_button.center)
             self.screen.blit(restart_text, restart_text_rect)
 
+            self.main_menu_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 210, 100, 50)
+            pygame.draw.rect(self.screen, self.Green, self.main_menu_button)
+
+            # Restart button
+            main_menu_button = pygame.Rect(self.width // 2 - 50, self.height // 2 + 210, 100, 50)
+            pygame.draw.rect(self.screen, self.Green, main_menu_button)
+            main_menu_font = pygame.font.Font(None, 24)
+            main_menu_text = main_menu_font.render("Main menu", True, self.Black)
+            main_menu_text_rect = main_menu_text.get_rect(center=main_menu_button.center)
+            self.screen.blit(main_menu_text, main_menu_text_rect)
+
             mouse_x, mouse_y = pygame.mouse.get_pos()
             if restart_button.collidepoint(mouse_x, mouse_y):
                 pygame.draw.rect(self.screen, self.Yellow, restart_button)
                 if pygame.mouse.get_pressed()[0]:
                     self.reset_game()
-            pass
+            elif main_menu_button.collidepoint(mouse_x, mouse_y):
+                pygame.draw.rect(self.screen, self.Yellow, main_menu_button)
+                if pygame.mouse.get_pressed()[0]:
+                    self.display_start_screen()
 
         pygame.mixer.music.stop()  # Stop the background music
 
@@ -645,16 +681,22 @@ class Game:
 
         pygame.display.flip()  # Update the display
 
-        waiting_for_restart = True
-        while waiting_for_restart:
+        waiting = True
+        while waiting:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                    waiting_for_restart = False
+                    waiting = False
                 elif event.type == pygame.MOUSEBUTTONDOWN and restart_button.collidepoint(event.pos):
                     self.reset_game()
-                    waiting_for_restart = False
+                    waiting = False
 
+                elif event.type == pygame.QUIT:
+                    self.running = False
+                    waiting = False
+                elif event.type == pygame.MOUSEBUTTONDOWN and main_menu_button.collidepoint(event.pos):
+                    self.display_start_screen()
+                    waiting = False
             self.clock.tick(self.fps)  # Add this line to control loop speed
 
         pygame.display.flip()
