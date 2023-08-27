@@ -28,7 +28,7 @@ class Game:
 
         # Initialize pygame screen
         self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("Shooting Flappy Birds")
+        pygame.display.set_caption("Shooting Flappy Birds ")
 
         # Initialize player, bullets, enemies, and other game variables
         self.player = Player(50, self.height // 2, "assets/images/player.png")  # Initialize player before accessing it
