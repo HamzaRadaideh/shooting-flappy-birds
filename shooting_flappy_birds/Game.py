@@ -432,7 +432,6 @@ class Game:
         restart_button = pygame.Rect(self.width // 2 - 100, self.height // 2 + 80, 200, 50)
         pygame.draw.rect(self.screen, self.Green, restart_button)
 
-
         restart_font = pygame.font.Font(None, 24)
         restart_text = restart_font.render("Restart", True, self.Black)
         restart_text_rect = restart_text.get_rect(center=restart_button.center)
