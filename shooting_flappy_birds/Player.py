@@ -5,11 +5,13 @@ from shooting_flappy_birds.AudioSettings import AudioSettings
 
 class Player:
     # Constructor for Player class
-    def __init__(self, x, y):
+    def __init__(self, x, y, image_path):
         self.background_music_volume = None
         self.height = 600
         self.x = x
         self.y = y
+        self.image = pygame.image.load(image_path)
+        self.image = pygame.transform.scale(self.image, (40, 40))
         self.speed = 5
         self.health = 100
         self.max_health = 100
@@ -34,4 +36,4 @@ class Player:
         self.rect.topleft = (self.x, self.y)
 
     def draw(self, screen):
-        pygame.draw.rect(screen, (0, 0, 0), self.rect)
+        screen.blit(self.image, self.rect)

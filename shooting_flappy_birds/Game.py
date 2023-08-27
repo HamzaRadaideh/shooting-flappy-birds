@@ -32,7 +32,7 @@ class Game:
         pygame.display.set_caption("Shooting Flappy Birds")
 
         # Initialize player, bullets, enemies, and other game variables
-        self.player = Player(50, self.height // 2)  # Initialize player before accessing it
+        self.player = Player(50, self.height // 2, "assets/images/player.png")  # Initialize player before accessing it
         self.bullets = []
         self.enemies = []
 
@@ -456,7 +456,7 @@ class Game:
 
     # Reset game variables for a new game
     def reset_game(self):
-        self.player = Player(50, self.height // 2)
+        self.player = Player(50, self.height // 2, "assets/images/player.png")
         self.bullets = []
         self.enemies = []
         self.score = 0
