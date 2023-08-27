@@ -469,6 +469,8 @@ class Game:
         if spawn_timer >= 100:
             bird_list.append(bird_class(self.width, random.randint(50, self.height - 50), image_path, speed))
             spawn_timer = 0
+        self.bird_sound.set_volume(self.audio_settings.bird_sound_volume)  # Update bird sound volume
+        self.bird_sound.play()  # Play the bird sound effect
         return spawn_timer
         self.bird_sound.set_volume(self.audio_settings.bird_sound_volume)  # Update bird sound volume
         self.bird_sound.play()  # Play the bird sound effect
