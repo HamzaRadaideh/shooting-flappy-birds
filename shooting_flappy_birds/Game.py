@@ -462,6 +462,7 @@ class Game:
         self.score = 0
         self.player.health = self.player.max_health
         self.running = True
+        self.run()
 
     # Spawn enemies based on timers and update their positions
     def spawn_enemy(self, bird_class, bird_list, spawn_timer, spawn_frequency, image_path, speed):
@@ -472,8 +473,6 @@ class Game:
         self.bird_sound.set_volume(self.audio_settings.bird_sound_volume)  # Update bird sound volume
         self.bird_sound.play()  # Play the bird sound effect
         return spawn_timer
-        self.bird_sound.set_volume(self.audio_settings.bird_sound_volume)  # Update bird sound volume
-        self.bird_sound.play()  # Play the bird sound effect
 
     # Check for collisions between bullets and enemies
     def check_bullet_collisions(self, bullet_list, enemy_list):
